@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube & Instagram Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .platform-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .platform-btn {
+            padding: 12px 30px;
+            margin: 0 10px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .platform-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .platform-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Media Downloader</h1>
+        
+        <div class="platform-selector">
+            <button class="platform-btn active" onclick="switchTab('youtube')">YouTube</button>
+            <button class="platform-btn" onclick="switchTab('instagram')">Instagram</button>
+        </div>
+        
+        <!-- YouTube Tab -->
+        <div id="youtube-tab" class="tab-content active">
+            <div class="input-group">
+                <label for="youtube-url">YouTube URL</label>
+                <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            
+            <div class="input-group">
+                <label for="quality">Quality</label>
+                <select id="quality">
+                    <option value="best">Best Quality</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                    <option value="audio">Audio Only (MP3)</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="downloadYouTube()">Download</button>
+            <button class="btn" onclick="getYouTubeInfo()" style="background: #48bb78;">Get Info</button>
+        </div>
+        
+        <!-- Instagram Tab -->
+        <div id="instagram-tab" class="tab-content">
+            <div class="input-group">
+                <label for="instagram-url">Instagram Post URL</label>
+                <input type="text" id="instagram-url" placeholder="https://www.instagram.com/p/...">
+            </div>
+            <button class="btn" onclick="downloadInstagram()">Download Post</button>
+            <button class="btn" onclick="getInstagramInfo()" style="background: #48bb78;">Get Post Info</button>
+            
+            <hr style="margin: 30px 0;">
+            
+            <div class="input-group">
+                <label for="instagram-username">Instagram Username (for stories)</label>
+                <input type="text" id="instagram-username" placeholder="username">
+            </div>
+            <button class="btn" onclick="downloadInstagramStories()" style="background: #ed8936;">Download Stories</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loading-text">Processing...</p>
+        </div>
+        
+        <div class="info-box" id="info-box" style="display: none;">
+            <h3>Video Information</h3>
+            <div id="info-content"></div>
+        </div>
+        
+        <div class="alert" id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+        
+        function showLoading(text = 'Processing...') {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `alert ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showInfo(content) {
+            document.getElementById('info-content').innerHTML = content;
+            document.getElementById('info-box').style.display = 'block';
+        }
+        
+        async function downloadYouTube() {
+            const url = document.getElementById('youtube-url').value;
+            const quality = document.getElementById('quality').value;
+            
+            if (!url) {
+                showMessage('Please enter a YouTube URL', 'error');
+                return;
+            }
+            
+            showLoading('Downloading video...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/download/youtube`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, quality })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Download failed');
+                }
+                
+                // Create blob from response
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = response.headers.get('content-disposition')?.split('filename=')[1] || 'video';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                showMessage('Download started!');
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function getYouTubeInfo() {
+            const url = document.getElementById('youtube-url').value;
+            
+            if (!url) {
+                showMessage('Please enter a YouTube URL', 'error');
+                return;
+            }
+            
+            showLoading('Fetching video information...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/info/youtube?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                let infoHTML = `
+                    <p><strong>Title:</strong> ${data.title}</p>
+                    <p><strong>Uploader:</strong> ${data.uploader}</p>
+                    <p><strong>Duration:</strong> ${Math.floor(data.duration / 60)}:${data.duration % 60}</p>
+                    <p><strong>Description:</strong> ${data.description || 'N/A'}</p>
+                    <p><strong>Available Formats:</strong></p>
+                    <ul>
+                `;
+                
+                data.formats?.slice(0, 5).forEach(format => {
+                    const size = format.filesize ? `(${(format.filesize / (1024*1024)).toFixed(2)} MB)` : '';
+                    infoHTML += `<li>${format.resolution || format.ext} ${format.ext} ${size}</li>`;
+                });
+                
+                infoHTML += '</ul>';
+                
+                showInfo(infoHTML);
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function downloadInstagram() {
+            const url = document.getElementById('instagram-url').value;
+            
+            if (!url) {
+                showMessage('Please enter an Instagram URL', 'error');
+                return;
+            }
+            
+            showLoading('Downloading Instagram post...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/download/instagram`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Download failed');
+                }
+                
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'instagram_post';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                showMessage('Download started!');
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function getInstagramInfo() {
+            const url = document.getElementById('instagram-url').value;
+            
+            if (!url) {
+                showMessage('Please enter an Instagram URL', 'error');
+                return;
+            }
+            
+            showLoading('Fetching Instagram post information...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/info/instagram?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                let infoHTML = `
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Caption:</strong> ${data.caption ? data.caption.substring(0, 100) + '...' : 'N/A'}</p>
+                    <p><strong>Likes:</strong> ${data.likes || 0}</p>
+                    <p><strong>Comments:</strong> ${data.comments || 0}</p>
+                    <p><strong>Type:</strong> ${data.type}</p>
+                    <p><strong>Posted:</strong> ${new Date(data.timestamp).toLocaleDateString()}</p>
+                `;
+                
+                showInfo(infoHTML);
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function downloadInstagramStories() {
+            const username = document.getElementById('instagram-username').value;
+            
+            if (!username) {
+                showMessage('Please enter a username', 'error');
+                return;
+            }
+            
+            showLoading('Downloading Instagram stories...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/download/instagram/stories`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Download failed');
+                }
+                
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `stories_${username}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                showMessage('Stories download started!');
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>
